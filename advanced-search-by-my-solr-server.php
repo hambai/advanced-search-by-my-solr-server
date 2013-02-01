@@ -85,8 +85,6 @@ function mss_admin_head() {
         jQuery(id).html('');
 	}
 
-	var ajax_url = 'options-general.php?page=MySolrServerSettings';
-
     var $j = jQuery.noConflict();
     
     function mss_switch1() {
@@ -216,8 +214,9 @@ function mss_admin_head() {
 	}
     
 	function doIndex(prev) {
-		$j('#mss_index_status').html('&nbsp;<img src="<?php print $this_plugin_dir_url; ?>images/ajax-circle.gif"> 0%');
-		$j.get(ajax_url, {action: 'index', prev: prev}, doIndexHandleResults, "json");
+		// removed this line to fix bug with percents not showing
+		// $j('#mss_index_status').html('&nbsp;<img src="<?php print $this_plugin_dir_url; ?>images/ajax-circle.gif"> 0%');
+		$j.get(ajaxurl, {action: 'mss_index_ajax', prev: prev}, doIndexHandleResults, "json");
 	}
 	function doIndexHandleResults(data) {
 		$j('#mss_index_status').html('&nbsp;<img src="<?php print $this_plugin_dir_url; ?>images/ajax-circle.gif"> ' + data.percent + '%');
@@ -250,7 +249,7 @@ function mss_admin_head() {
 			var proxyusername = $('#mss_solr_proxyusername').val();
 			var proxypassword = $('#mss_solr_proxypassword').val();
 			
-     	    $.get(ajax_url, {action: 'accountgetinfo', name: name, passwd: passwd, proxy: proxy, proxyport: proxyport, proxyusername: proxyusername, proxypassword: proxypassword }, 
+     	    $.get(ajaxurl, {action: 'mss_accountgetinfo_ajax', name: name, passwd: passwd, proxy: proxy, proxyport: proxyport, proxyusername: proxyusername, proxypassword: proxypassword }, 
         		function(data) {
      	    		var resp = JSON.parse(data);
 					if (resp.status == 'ok') {
@@ -304,7 +303,7 @@ function mss_admin_head() {
 			var passwd = $('#mss_passwd').val();
 			var url = $('#mss_instances').val();
 
-			$.get(ajax_url, {action: 'save', name: name, passwd: passwd, url: url }, 
+			$.get(ajaxurl, {action: 'mss_save_ajax', name: name, passwd: passwd, url: url }, 
         		function(data) {
      	    		var resp = JSON.parse(data);
 					if (resp.status == 'ok') {
@@ -326,9 +325,9 @@ function mss_admin_head() {
 			var proxyusername = $('#mss_solr_proxyusername').val();
 			var proxypassword = $('#mss_solr_proxypassword').val();
 
-			$.get(ajax_url, {action: 'save_proxy', proxy: proxy, proxyport: proxyport, proxyusername: proxyusername, proxypassword: proxypassword }, 
-        		function(data) {
-     	    		var resp = JSON.parse(data);
+			$.post(ajaxurl, {action: 'mss_save_proxy_ajax', proxy: proxy, proxyport: proxyport, proxyusername: proxyusername, proxypassword: proxypassword }, 
+        			function(data) {
+     	    				var resp = JSON.parse(data);
 					if (resp.status == 'ok') {
 						$('#mss_save_proxy_status').html('&nbsp;<img src="<?php print $this_plugin_dir_url; ?>images/success.png">');
 						setTimeout("clearSaveStatus('#mss_save_proxy_status')",1000);
@@ -381,18 +380,18 @@ function mss_admin_head() {
     		//alert(str.replace(/&/g, '\n'));
     		if (str=='') {
     			$('#mss_save_option_status').html('&nbsp;<img src="<?php print $this_plugin_dir_url; ?>images/warning.png">&nbsp;Save failed. Try again !');
-            	return false;
+            		return false;
     		}
-     	    $.post(ajax_url, 'action=saveall&'+str, 
+     	    	$.post(ajaxurl, 'action=mss_saveall_ajax&'+str, 
         		function(data) {
      	    		var resp = JSON.parse(data);
-					if (resp.status == 'ok') {
-						$('#mss_save_option_status').html('&nbsp;<img src="<?php print $this_plugin_dir_url; ?>images/success.png">');
-						setTimeout("clearSaveStatus('#mss_save_option_status')",1000);
-					}
-					else {
-						$('#mss_save_option_status').html('&nbsp;<img src="<?php print $this_plugin_dir_url; ?>images/warning.png">');
-					}
+				if (resp.status == 'ok') {
+					$('#mss_save_option_status').html('&nbsp;<img src="<?php print $this_plugin_dir_url; ?>images/success.png">');
+					setTimeout("clearSaveStatus('#mss_save_option_status')",1000);
+				}
+				else {
+					$('#mss_save_option_status').html('&nbsp;<img src="<?php print $this_plugin_dir_url; ?>images/warning.png">');
+				}
         		});
     		
             return false;     
@@ -400,8 +399,8 @@ function mss_admin_head() {
 
        	$('[name=mss_btn_ping]').click(function() {
 
-       		$('#mss_ping_status').html('&nbsp;<img src="<?php print $this_plugin_dir_url; ?>images/ajax-circle.gif">');
-     	    $.get(ajax_url, {action: 'ping'}, 
+		$('#mss_ping_status').html('&nbsp;<img src="<?php print $this_plugin_dir_url; ?>images/ajax-circle.gif">');
+		$.get(ajaxurl, {action: 'mss_ping_ajax'}, 
            		function(data) {
          			var resp = JSON.parse(data);
     				if (resp.status == 'ok') {
@@ -419,7 +418,7 @@ function mss_admin_head() {
        	$('[name=mss_btn_optimize]').click(function() {
 
        		$('#mss_optimize_status').html('&nbsp;<img src="<?php print $this_plugin_dir_url; ?>images/ajax-circle.gif">');
-     	    $.get(ajax_url, {action: 'optimize'}, 
+     	    $.get(ajaxurl, {action: 'mss_optimize_ajax'}, 
            		function(data) {
          			var resp = JSON.parse(data);
     				if (resp.status == 'ok') {
@@ -442,7 +441,7 @@ function mss_admin_head() {
        	$('[name=mss_btn_deleteall]').click(function() {
 
        		$('#mss_deleteall_status').html('&nbsp;<img src="<?php print $this_plugin_dir_url; ?>images/ajax-circle.gif">');
-     	    $.get(ajax_url, {action: 'deleteall'}, 
+     	    $.get(ajaxurl, {action: 'mss_deleteall_ajax'}, 
            		function(data) {
          			var resp = JSON.parse(data);
     				if (resp.status == 'ok') {
@@ -954,204 +953,220 @@ function mss_gen_taxo_array($in, $vals) {
 }
 
 
-function mss_options_init() {
+/**
+ * AJAX form actions below
+ */
 
-	$action = strtolower(POSTGET("action"));
+add_action('wp_ajax_mss_accountgetinfo_ajax', 'mss_accountgetinfo_ajax');
 
-	if ($action=="accountgetinfo") {
-		Global $url_mysolrserver, $url_extraparam;
-		$name = POSTGET("name");
-		$passwd = POSTGET("passwd");
+function mss_accountgetinfo_ajax() {
+	Global $url_mysolrserver, $url_extraparam;
+	$name = POSTGET("name");
+	$passwd = POSTGET("passwd");
 
-		$proxy=POSTGET("proxy");
-		$proxyport=POSTGET("proxyport");
-		$proxyusername=POSTGET("proxyusername");
-		$proxypassword=POSTGET("proxypassword");
-		
-		print ($account_info_json = getMssAccountInfo($url_mysolrserver, $url_extraparam, $name, $passwd, $proxy, $proxyport, $proxyusername, $proxypassword));
-		exit();
+	$proxy=POSTGET("proxy");
+	$proxyport=POSTGET("proxyport");
+	$proxyusername=POSTGET("proxyusername");
+	$proxypassword=POSTGET("proxypassword");
+	
+	print ($account_info_json = getMssAccountInfo($url_mysolrserver, $url_extraparam, $name, $passwd, $proxy, $proxyport, $proxyusername, $proxypassword));
+	exit();
+}
+
+add_action('wp_ajax_mss_save_ajax', 'mss_save_ajas');
+
+function mss_save_ajax() {
+	$options = mss_get_option();
+
+	$options['mss_id']=POSTGET("name");
+	$options['mss_passwd']=encrypt(POSTGET("passwd"));
+	$options['mss_url']=POSTGET("url");
+
+	// update mss parameters
+	$u = parse_url($options['mss_url']);
+	if ($u) {
+		$port = ($u['port']=="") ? "80" : $u['port'];
+		if ($u['host']=="") $port = "";
+
+		$options['mss_solr_host']=$u['host'];
+		$options['mss_solr_port']=$port;
+		$options['mss_solr_path']=$u['path'];
 	}
 
-	if ($action=="save") {
-		$options = mss_get_option();
+	$options['mss_connect_type'] = 'mysolrserver';
 
-		$options['mss_id']=POSTGET("name");
-		$options['mss_passwd']=encrypt(POSTGET("passwd"));
-		$options['mss_url']=POSTGET("url");
+	mss_update_option($options);
+
+	$arr = array();
+	$arr['status']='ok';
+	print(json_encode($arr));
+	exit();
+}
+
+add_action('wp_ajax_mss_save_proxy_ajax', 'mss_save_proxy_ajax');
+
+function mss_save_proxy_ajax() {
+	$options = mss_get_option();
+
+
+	$options['mss_solr_proxy']=POSTGET("proxy");
+	$options['mss_solr_proxyport']=POSTGET("proxyport");
+	$options['mss_solr_proxyusername']=POSTGET("proxyusername");
+	$options['mss_solr_proxypassword']=encrypt(POSTGET("proxypassword"));
+
+	mss_update_option($options);
+
+	$arr = array();
+	$arr['status']='ok';
+	print(json_encode($arr));
+	exit();
+}
+
+add_action('wp_ajax_mss_saveall_ajax', 'mss_saveall_ajax');
+
+function mss_saveall_ajax() {
+	$options = mss_get_option();
+
+	$options['mss_id']=$_POST['settings']['mss_id'];
+	$options['mss_passwd']=$_POST['settings']['mss_passwd'];
+	$options['mss_url']=$_POST['settings']['mss_url'];
+
+	$options['mss_solr_proxy']=$_POST['settings']['mss_solr_proxy'];
+	$options['mss_solr_proxyport']=$_POST['settings']['mss_solr_proxyport'];
+	$options['mss_solr_proxyusername']=$_POST['settings']['mss_solr_proxyusername'];
+	$options['mss_solr_proxypassword']=$_POST['settings']['mss_solr_proxypassword'];
+	
+	if ($_POST['settings']['mss_connect_type']=='mysolrserver') {
 
 		// update mss parameters
 		$u = parse_url($options['mss_url']);
 		if ($u) {
-			$port = ($u['port']=="") ? "80" : $u['port'];
+			$port = (!isset($u['port']) || $u['port']=="") ? "80" : $u['port'];
 			if ($u['host']=="") $port = "";
 
 			$options['mss_solr_host']=$u['host'];
 			$options['mss_solr_port']=$port;
 			$options['mss_solr_path']=$u['path'];
 		}
-
-		$options['mss_connect_type'] = 'mysolrserver';
-
-		mss_update_option($options);
-
-		$arr = array();
-		$arr['status']='ok';
-		print(json_encode($arr));
-		exit();
-	}
-	
-	if ($action=="save_proxy") {
-		$options = mss_get_option();
-
-	
-		$options['mss_solr_proxy']=POSTGET("proxy");
-		$options['mss_solr_proxyport']=POSTGET("proxyport");
-		$options['mss_solr_proxyusername']=POSTGET("proxyusername");
-		$options['mss_solr_proxypassword']=encrypt(POSTGET("proxypassword"));
-	
-		mss_update_option($options);
-	
-		$arr = array();
-		$arr['status']='ok';
-		print(json_encode($arr));
-		exit();
 	}
 
-		if ($action=="saveall") {
-			$options = mss_get_option();
-
-			$options['mss_id']=$_POST['settings']['mss_id'];
-			$options['mss_passwd']=$_POST['settings']['mss_passwd'];
-			$options['mss_url']=$_POST['settings']['mss_url'];
-
- 			$options['mss_solr_proxy']=$_POST['settings']['mss_solr_proxy'];
- 			$options['mss_solr_proxyport']=$_POST['settings']['mss_solr_proxyport'];
- 			$options['mss_solr_proxyusername']=$_POST['settings']['mss_solr_proxyusername'];
- 			$options['mss_solr_proxypassword']=$_POST['settings']['mss_solr_proxypassword'];
-			
-			if ($_POST['settings']['mss_connect_type']=='mysolrserver') {
-
-				// update mss parameters
-				$u = parse_url($options['mss_url']);
-				if ($u) {
-					$port = (!isset($u['port']) || $u['port']=="") ? "80" : $u['port'];
-					if ($u['host']=="") $port = "";
-
-					$options['mss_solr_host']=$u['host'];
-					$options['mss_solr_port']=$port;
-					$options['mss_solr_path']=$u['path'];
-				}
+	// lets loop through our options already in database
+	foreach ($options as $option => $old_value ) {
+		if (!(($_POST['settings']['mss_connect_type']=='mysolrserver') && ($option == 'mss_solr_host' || $option == 'mss_solr_port' || $option == 'mss_solr_path'))) {
+			if ($option == 'mss_index_all_sites' || $option == 'mss_solr_initialized') {
+				$value = trim($old_value);
+			} else {
+				if (isset($_POST['settings'][$option]))
+				$value = $_POST['settings'][$option];
+				else
+				$value = '';
 			}
-
-			// lets loop through our options already in database
-			foreach ($options as $option => $old_value ) {
-				if (!(($_POST['settings']['mss_connect_type']=='mysolrserver') && ($option == 'mss_solr_host' || $option == 'mss_solr_port' || $option == 'mss_solr_path'))) {
-					if ($option == 'mss_index_all_sites' || $option == 'mss_solr_initialized') {
-						$value = trim($old_value);
-					} else {
-						if (isset($_POST['settings'][$option]))
-						$value = $_POST['settings'][$option];
-						else
-						$value = '';
-					}
-					if ($option == 'mss_passwd') $value=encrypt($value);
-					if ($option == 'mss_solr_proxypassword') $value=encrypt($value);
-					if ( !is_array($value) ) $value = trim($value);
-					$value = stripslashes_deep($value);
-					$options[$option] = $value;
-				}
-			}
-
-			// lets loops to the posted options $_POST['settings'] and eventualy add new created options (plugin upgrade)
-			foreach ($_POST['settings'] as $option => $value ) {
-				if (!isset($options[$option]))
-				$options[$option] = $value;
-			}
-
-			mss_update_option($options);
-
-			$arr = array();
-			$arr['status']='ok';
-			print(json_encode($arr));
-			exit();
+			if ($option == 'mss_passwd') $value=encrypt($value);
+			if ($option == 'mss_solr_proxypassword') $value=encrypt($value);
+			if ( !is_array($value) ) $value = trim($value);
+			$value = stripslashes_deep($value);
+			$options[$option] = $value;
 		}
+	}
 
-	if ($action=="ping") {
-		$options = mss_get_option();
-		$arr = array();
+	// lets loops to the posted options $_POST['settings'] and eventualy add new created options (plugin upgrade)
+	foreach ($_POST['settings'] as $option => $value ) {
+		if (!isset($options[$option]))
+		$options[$option] = $value;
+	}
 
-		$solr = new Mss_Solr();
-		if ($solr->connect($options, true)) {
+	mss_update_option($options);
+
+	$arr = array();
+	$arr['status']='ok';
+	print(json_encode($arr));
+	exit();
+}
+
+add_action('wp_ajax_mss_ping_ajax', 'mss_ping_ajax');
+
+function mss_ping_ajax() {
+	$options = mss_get_option();
+	$arr = array();
+
+	$solr = new Mss_Solr();
+	if ($solr->connect($options, true)) {
+		$arr['status']='ok';
+	}
+	else {
+		$arr['status']='ko';
+	}
+	print(json_encode($arr));
+	exit();
+}
+
+add_action('wp_ajax_mss_optimize_ajax', 'mss_optimize_ajax');
+
+function mss_optimize_ajax() {
+	$options = mss_get_option();
+	$arr = array();
+
+	$solr = new Mss_Solr();
+	if ($solr->connect($options, true)) {
+		if ($solr->optimize()) {
 			$arr['status']='ok';
 		}
 		else {
 			$arr['status']='ko';
 		}
-		print(json_encode($arr));
-		exit();
+	}
+	else {
+		$arr['status']='ko';
+		$arr['code']=$solr->getLastErrorCode();
+		$arr['message']=$solr->getLastErrorMessage();
 	}
 
-	if ($action=="optimize") {
-		$options = mss_get_option();
-		$arr = array();
+	print(json_encode($arr));
+	exit();
+}
 
-		$solr = new Mss_Solr();
-		if ($solr->connect($options, true)) {
-			if ($solr->optimize()) {
-				$arr['status']='ok';
-			}
-			else {
-				$arr['status']='ko';
-			}
+add_action('wp_ajax_mss_deleteall_ajax', 'mss_deleteall_ajax');
+
+function mss_deleteall_ajax() {
+	$options = mss_get_option();
+	$arr = array();
+
+	$solr = new Mss_Solr();
+	if ($solr->connect($options, true)) {
+		if ($solr->deleteall()) {
+			$arr['status']='ok';
 		}
 		else {
 			$arr['status']='ko';
-			$arr['code']=$solr->getLastErrorCode();
-			$arr['message']=$solr->getLastErrorMessage();
 		}
-
-		print(json_encode($arr));
-		exit();
+	}
+	else {
+		$arr['status']='ko';
+		$arr['code']=$solr->getLastErrorCode();
+		$arr['message']=$solr->getLastErrorMessage();
 	}
 
-	if ($action=="deleteall") {
-		$options = mss_get_option();
-		$arr = array();
+	print(json_encode($arr));
+	exit();
+}
 
-		$solr = new Mss_Solr();
-		if ($solr->connect($options, true)) {
-			if ($solr->deleteall()) {
-				$arr['status']='ok';
-			}
-			else {
-				$arr['status']='ko';
-			}
-		}
-		else {
-			$arr['status']='ko';
-			$arr['code']=$solr->getLastErrorCode();
-			$arr['message']=$solr->getLastErrorMessage();
-		}
+add_action('wp_ajax_mss_index_ajax', 'mss_index_ajax');
 
-		print(json_encode($arr));
-		exit();
-	}
-	if ($action=="index") {
-		$options = mss_get_option();
+function mss_index_ajax() {
+	$options = mss_get_option();
 
-		$prev = POSTGET('prev');
-		mss_load_all($options, $prev);
-		exit();
-	}
-	}
+	$prev = POSTGET('prev');
+	mss_load_all($options, $prev);
+	exit();
+}
 
-	add_action( 'template_redirect', 'mss_template_redirect', 1 );
-	add_action( 'publish_post', 'mss_handle_modified' );
-	add_action( 'publish_page', 'mss_handle_modified' );
-	add_action( 'save_post', 'mss_handle_save' );
-	add_action( 'edit_post', 'mss_handle_status_change' );
-	add_action( 'delete_post', 'mss_handle_delete' );
-	add_action( 'admin_init', 'mss_options_init');
+add_action( 'template_redirect', 'mss_template_redirect', 1 );
+add_action( 'publish_post', 'mss_handle_modified' );
+add_action( 'publish_page', 'mss_handle_modified' );
+add_action( 'save_post', 'mss_handle_save' );
+add_action( 'edit_post', 'mss_handle_status_change' );
+add_action( 'delete_post', 'mss_handle_delete' );
+add_action( 'admin_init', 'mss_options_init');
 
-	add_action( 'wp_head', 'mss_autosuggest_head');
-	?>
+add_action( 'wp_head', 'mss_autosuggest_head');
+?>
